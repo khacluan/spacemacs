@@ -58,7 +58,7 @@ This function should only modify configuration layer settings."
      react
      ruby-on-rails
      (ruby :variables
-           ruby-enable-enh-ruby-mode t
+           ;; ruby-enable-enh-ruby-mode t
            ruby-version-manager 'rvm
            ruby-test-runner 'rspec)
      tmux
@@ -87,13 +87,13 @@ This function should only modify configuration layer settings."
    dotspacemacs-additional-packages
    '(
      prettier-js
-     telephone-line
      react-snippets
      apib-mode
      flow-minor-mode
      (flow-js2-mode :location local)
      rspec-mode
      ws-butler
+     (airline-themes :location local)
      )
 
    ;; A list of packages that cannot be updated.
@@ -521,7 +521,9 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
-  (iswitchb-mode 1)
+  ;; Google Translator
+  (setq google-translate-default-source-language "en")
+  (setq google-translate-default-target-language "vi")
 
   ;; set colors
   ;; (set-face-attribute 'spacemacs-normal-face nil :foreground "#262626")
@@ -530,7 +532,26 @@ before packages are loaded."
   ;; (set-face-attribute 'spacemacs-evilified-face nil :foreground "#262626")
   ;; (set-face-attribute 'spacemacs-visual-face nil :foreground "#262626")
   ;; (set-face-attribute 'spacemacs-replace-face nil :foreground "#262626")
-  (set-face-attribute 'region nil :background "#4359f5")
+  (set-face-background 'region "#284050")
+
+  ;; Airline configuration
+  (require 'airline-themes)
+  (setq powerline-utf-8-separator-left        #xe0b0
+        powerline-utf-8-separator-right       #xe0b2
+        airline-utf-glyph-separator-left      #xe0b0
+        airline-utf-glyph-separator-right     #xe0b2
+        airline-utf-glyph-subseparator-left   #xe0b1
+        airline-utf-glyph-subseparator-right  #xe0b3
+        airline-utf-glyph-branch              #xf408
+        airline-utf-glyph-readonly            #xe0a2
+        airline-utf-glyph-linenumber          #xe0a1)
+
+  (setq airline-minor-modes nil)
+  (setq airline-shortened-vc-info t)
+  ;;(setq airline-display-directory 'airline-directory-full)
+
+  ;; Load theme
+  (load-theme 'airline-nord t)
 
   ;; delete trailling whitespace
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
@@ -645,41 +666,6 @@ DEPTH indicates how deep in the filetree the current button is."
   ;; Languages hook
   (add-hook 'js2-mode-hook 'prettier-js-mode)
 
-
-  (telephone-line-defsegment telephone-line-improved-vc-segment ()
-    (when vc-mode
-      (cond
-       ((string-match "Git[:-]" vc-mode)
-        (let ((branch (mapconcat 'concat (cdr (split-string vc-mode "[:-]")) "-")))
-          (concat "" (format " %s" branch))))
-       ;; ((string-match "SVN-" vc-mode)
-       ;;  (let ((revision (cadr (split-string vc-mode "-"))))
-       ;;    (concat "" (format "SVN-%s" revision))))
-       (t (format "%s" vc-mode)))))
-
-  (telephone-line-defsegment* telephone-line-airline-position-segment (&optional lines columns)
-    (let* ((l (number-to-string (if lines lines 1)))
-           (c (number-to-string (if columns columns 2))))
-      (if (eq major-mode 'paradox-menu-mode)
-          (telephone-line-raw mode-line-front-space t)
-        `((-3 "%p") ,(concat "  " "%" l "l:%" c "c")))))
-
-  (setq telephone-line-lhs
-        '((evil   . (telephone-line-evil-tag-segment))
-          (accent . (telephone-line-improved-vc-segment
-                     telephone-line-process-segment))
-          (nil    . (telephone-line-buffer-segment
-                     telephone-line-projectile-segment))))
-
-  (setq telephone-line-rhs
-        '((nil    . (telephone-line-flycheck-segment
-                     telephone-line-misc-info-segment))
-          (accent . (telephone-line-major-mode-segment))
-          (evil   . (telephone-line-airline-position-segment))))
-
-  ;; Load theme
-  (telephone-line-mode t)
-
   ;; Always follow symbolic links
   (setq vc-follow-symlinks t)
   )
@@ -698,7 +684,7 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (yasnippet-classic-snippets rjsx-mode expand-region dumb-jump counsel-projectile counsel ivy flycheck helm helm-core magit ghub treemacs projectile org-plus-contrib yasnippet-snippets yaml-mode ws-butler winum which-key web-mode web-beautify volatile-highlights vimrc-mode vi-tilde-fringe uuidgen use-package unfill treemacs-projectile treemacs-evil toc-org telephone-line tagedit symon swiper string-inflection spaceline-all-the-icons smeargle slim-mode seeing-is-believing scss-mode sass-mode rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocop rspec-mode robe reveal-in-osx-finder restart-emacs react-snippets rbenv rainbow-delimiters pug-mode projectile-rails prettier-js popwin pfuture persp-mode password-generator paradox overseer osx-trash osx-dictionary orgit org-projectile org-present org-pomodoro org-mime org-download org-bullets org-brain open-junk-file nameless mwim move-text mmm-mode minitest markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum livid-mode link-hint launchctl json-navigator json-mode js2-refactor js-doc indent-guide impatient-mode hungry-delete ht hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-css-scss helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md fuzzy font-lock+ flycheck-pos-tip flx-ido flow-minor-mode fill-column-indicator feature-mode fancy-battery eyebrowse evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-cleverparens evil-args evil-anzu eval-sexp-fu enh-ruby-mode emmet-mode elisp-slime-nav editorconfig dotenv-mode diminish diff-hl dactyl-mode company-web company-tern company-statistics column-enforce-mode clean-aindent-mode chruby centered-cursor-mode bundler browse-at-remote auto-yasnippet auto-highlight-symbol auto-compile atom-dark-theme apib-mode aggressive-indent add-node-modules-path ace-window ace-link ace-jump-helm-line ac-ispell))))
+    (yasnippet-classic-snippets rjsx-mode expand-region dumb-jump counsel-projectile counsel ivy flycheck helm helm-core magit ghub treemacs projectile org-plus-contrib yasnippet-snippets yaml-mode ws-butler winum which-key web-mode web-beautify volatile-highlights vimrc-mode vi-tilde-fringe uuidgen use-package unfill treemacs-projectile treemacs-evil toc-org tagedit symon swiper string-inflection spaceline-all-the-icons smeargle slim-mode seeing-is-believing scss-mode sass-mode rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocop rspec-mode robe reveal-in-osx-finder restart-emacs react-snippets rbenv rainbow-delimiters pug-mode projectile-rails prettier-js popwin pfuture persp-mode password-generator paradox overseer osx-trash osx-dictionary orgit org-projectile org-present org-pomodoro org-mime org-download org-bullets org-brain open-junk-file nameless mwim move-text mmm-mode minitest markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum livid-mode link-hint launchctl json-navigator json-mode js2-refactor js-doc indent-guide impatient-mode hungry-delete ht hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-css-scss helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md fuzzy font-lock+ flycheck-pos-tip flx-ido flow-minor-mode fill-column-indicator feature-mode fancy-battery eyebrowse evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-cleverparens evil-args evil-anzu eval-sexp-fu enh-ruby-mode emmet-mode elisp-slime-nav editorconfig dotenv-mode diminish diff-hl dactyl-mode company-web company-tern company-statistics column-enforce-mode clean-aindent-mode chruby centered-cursor-mode bundler browse-at-remote auto-yasnippet auto-highlight-symbol auto-compile apib-mode aggressive-indent add-node-modules-path ace-window ace-link ace-jump-helm-line ac-ispell))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
