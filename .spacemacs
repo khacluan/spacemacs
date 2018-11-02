@@ -1,7 +1,6 @@
 ;; -*- mode: emacs-lisp; lexical-binding: t -*-
 ;; This file is loaded by Spacemacs at startup.
 ;; It must be stored in your home directory.
-
 (defun dotspacemacs/layers ()
   "Layer configuration:
 This function should only modify configuration layer settings."
@@ -33,7 +32,7 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(php
+   '(
      syntax-checking
      html
      javascript
@@ -46,14 +45,11 @@ This function should only modify configuration layer settings."
                       auto-completion-complete-with-key-sequence-delay 0.5
                       auto-completion-complete-with-key-sequence "jk")
      better-defaults
-     emacs-lisp
      git
-     ;; gtags
-     helm
      (javascript :variables node-add-modules-path t)
      markdown
      (node :variables node-add-modules-path t)
-     org
+     (org :variables org-enable-github-support t)
      osx
      react
      ruby-on-rails
@@ -62,11 +58,14 @@ This function should only modify configuration layer settings."
            ruby-version-manager 'rvm
            ruby-test-runner 'rspec)
      tmux
-     treemacs
-     version-control
+     (version-control :variables
+                      version-control-diff-tool 'diff-hl
+                      version-control-diff-side 'left
+                      version-control-global-margin t)
      vimscript
      xclipboard
      yaml
+     copy-as-format
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -86,6 +85,7 @@ This function should only modify configuration layer settings."
    ;; Also include the dependencies as they will not be resolved automatically.
    dotspacemacs-additional-packages
    '(
+     helm
      prettier-js
      react-snippets
      apib-mode
@@ -238,7 +238,8 @@ It should only modify the values of Spacemacs settings."
    '(
       wombat
       ;;atom-dark
-      ;;zenburn
+      ;; (nord :location (recipe :fetcher github
+      ;;                         :repo "visigoth/nord-emacs"))
     )
 
    ;; Set the theme for the Spaceline. Supported themes are `spacemacs',
@@ -521,9 +522,67 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+  ;; Org mode configuration
+  (setq org-todo-keywords
+        '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
+
+  (custom-theme-set-faces
+   'user
+   '(variable-pitch ((t (:family "Source Sans Pro" :height 180 :weight light))))
+   '(fixed-pitch ((t ( :family "Inconsolata" :slant normal :weight normal :height 1.0 :width normal)))))
+
+  ;; Y install yes, n instead of No
+  (fset 'yes-or-no-p 'y-or-n-p) ;; Answer with y and n instead of yes and no
+  (setq confirm-kill-emacs 'yes-or-no-p) ;; Ask for confirmation before closing emacs
+  (setq-default fill-column 80) ;; Sets a 80 character line width
+  (setq inhibit-startup-screen t) ;; Don’t display the default splash screen
+  (setq large-file-warning-threshold nil) ;; Don’t warn me about opening large files
+
+  ;; Import Js
+  (evil-leader/set-key-for-mode 'js2-mode "i" 'import-js-import)
+  (evil-leader/set-key-for-mode 'rjsx-mode "i" 'import-js-import)
+
+  ;; Git gutter
+  ;; If you enable global minor mode
+  (global-git-gutter-mode +1)
+
+  (custom-set-variables
+   '(git-gutter:window-width 1)
+   '(git-gutter:handled-backends '(git))
+   '(git-gutter:update-interval 1))
+
+  ;; Hide underline
+  ;; (set-face-underline 'highlight nil)
+
+  ;; Preserve syntax highlight when highlighting current line
+  (set-face-foreground 'highlight nil)
+
+  ;; Auto regenerate tags when switch project
+  (setq tags-revert-without-query 1)
+
   ;; Google Translator
   (setq google-translate-default-source-language "en")
   (setq google-translate-default-target-language "vi")
+
+  (use-package google-translate
+    :ensure t
+    :config
+    (when (and (string-match "0.11.14"
+                             (google-translate-version))
+               (>= (time-to-seconds)
+		               (time-to-seconds
+                    (encode-time 0 0 0 23 9 2018))))
+      (defun google-translate--get-b-d1 ()
+        ;; TKK='427110.1469889687'
+        (list 427110 1469889687))))
+
+  ;; Jump between implementation and testing
+  (projectile-register-project-type 'npm '("package.json")
+                                    :compile "yarn install"
+                                    :test "yarn test"
+                                    :run "yarn start"
+                                    :src-dir "~/frontend-core/src"
+                                    :test-suffix ".spec")
 
   ;; set colors
   ;; (set-face-attribute 'spacemacs-normal-face nil :foreground "#262626")
@@ -565,87 +624,17 @@ before packages are loaded."
   (setq js2-mode-show-parse-errors nil)
   (setq js2-mode-show-strict-warnings nil)
 
-  ;; Robe-mode
+  ;; Robe hooks
   (add-hook 'ruby-mode-hook 'robe-mode)
+  ;; (add-hook 'ruby-mode-hook 'git-gutter-mode)
+  ;; (add-hook 'ruby-mode-hook 'ruby-test-mode)
   (add-hook 'robe-mode-hook 'ac-robe-setup)
   (defadvice inf-ruby-console-auto (before activate-rvm-for-robe activate)
     (rvm-activate-corresponding-ruby))
 
-  ;; Icons
-  (setq treemacs-no-png-images t)
-    (defun my-treemacs-hash-icons ()
-      "Create and define all icons-related caches, hashes and stashes."
-      (setq-local treemacs-icons-hash (make-hash-table :size 100 :test #'equal))
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "vim")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "svg")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "md" "markdown")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "js")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "jsx")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "css")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "png" "pdf" "jpg")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "ico")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "html")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "clj")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "cljs")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "go")
-      (treemacs-define-custom-icon
-      (propertize "" 'face 'font-lock-keyword-face)
-      "yml"
-      "yaml"
-      "DS_Store"
-      "properties"
-      "conf"
-      "config"
-      "gitignore"
-      "gitconfig"
-      "ini"
-      "xdefaults"
-      "xresources"
-      "terminalrc"
-      "org"
-      "toml")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "rb" "ruby")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "zsh" "bash" "sh")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "py")
-      (treemacs-define-custom-icon (propertize "" 'face 'font-lock-keyword-face) "json")
-      treemacs-icons-hash)
-
-  (defun my-treemacs--create-file-button-strings (path prefix parent depth)
-    "Return the text to insert for a file button for PATH.
-PREFIX is a string inserted as indentation.
-PARENT is the (optional) button under which this one is inserted.
-DEPTH indicates how deep in the filetree the current button is."
-    (my-treemacs-hash-icons)
-    (list
-     prefix
-     (ht-get treemacs-icons-hash
-             (-> path (treemacs--file-extension) (downcase))
-             treemacs-icon-fallback)
-     (propertize (file-name-nondirectory path)
-                 'button '(t)
-                 'category 'default-button
-                 'help-echo nil
-                 'keymap nil
-                 :default-face 'treemacs-git-unmodified-face
-                 :state 'file-node-closed
-                 :path path
-                 :parent parent
-                 :depth depth)))
-
-  (advice-add 'treemacs--create-file-button-strings :override #'my-treemacs--create-file-button-strings )
-
-  (with-eval-after-load "treemacs"
-    (setq
-     treemacs-icon-tag-node-open-txt   (propertize "▾ " 'face 'font-lock-keyword-face)
-     treemacs-icon-tag-node-closed-txt (propertize "▸ " 'face 'font-lock-keyword-face)
-     treemacs-icon-open-text   (propertize "▾ " 'face 'font-lock-keyword-face)
-     treemacs-icon-closed-text (propertize "▸ " 'face 'font-lock-keyword-face)
-     treemacs-icon-tag-leaf-txt (propertize "- " 'face 'font-lock-keyword-face)
-     treemacs-icon-fallback-text (propertize " " 'face 'font-lock-keyword-face)
-
-     treemacs-icon-open-png   (propertize "▾ " 'face 'font-lock-keyword-face)
-     treemacs-icon-closed-png (propertize "▸ " 'face 'font-lock-keyword-face)
-     treemacs-icon-text (propertize " " 'face 'font-lock-keyword-face)))
+  ;; Javascript Hooks
+  (add-hook 'js2-mode-hook 'prettier-js-mode)
+  ;; (add-hook 'js2-mode-hook 'ruby-test-mode)
 
   (my-setup-indent 2) ; indent 2 spaces width
 
@@ -653,7 +642,6 @@ DEPTH indicates how deep in the filetree the current button is."
   (autoload 'apib-moconde "apib-mode"
     "Major mode for 'editing API Blueprint files" t)
   (add-to-list 'auto-mode-alist '("\\.apib\\'" . apib-mode))
-
 
   ;; custom mappings
   (evil-leader/set-key "w |" 'split-window-right)
@@ -663,12 +651,10 @@ DEPTH indicates how deep in the filetree the current button is."
   (global-set-key (kbd "C-k") 'evil-window-up)
   (define-key evil-normal-state-map (kbd "C-p") 'projectile-find-file)
 
-  ;; Languages hook
-  (add-hook 'js2-mode-hook 'prettier-js-mode)
-
   ;; Always follow symbolic links
   (setq vc-follow-symlinks t)
-  )
+
+    )
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
@@ -682,13 +668,18 @@ This function is called at the very end of Spacemacs initialization."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(evil-want-Y-yank-to-eol nil)
+ '(git-gutter:handled-backends (quote (git)))
+ '(git-gutter:update-interval 1)
+ '(git-gutter:window-width 1)
  '(package-selected-packages
    (quote
-    (yasnippet-classic-snippets rjsx-mode expand-region dumb-jump counsel-projectile counsel ivy flycheck helm helm-core magit ghub treemacs projectile org-plus-contrib yasnippet-snippets yaml-mode ws-butler winum which-key web-mode web-beautify volatile-highlights vimrc-mode vi-tilde-fringe uuidgen use-package unfill treemacs-projectile treemacs-evil toc-org tagedit symon swiper string-inflection spaceline-all-the-icons smeargle slim-mode seeing-is-believing scss-mode sass-mode rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocop rspec-mode robe reveal-in-osx-finder restart-emacs react-snippets rbenv rainbow-delimiters pug-mode projectile-rails prettier-js popwin pfuture persp-mode password-generator paradox overseer osx-trash osx-dictionary orgit org-projectile org-present org-pomodoro org-mime org-download org-bullets org-brain open-junk-file nameless mwim move-text mmm-mode minitest markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum livid-mode link-hint launchctl json-navigator json-mode js2-refactor js-doc indent-guide impatient-mode hungry-delete ht hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-css-scss helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md fuzzy font-lock+ flycheck-pos-tip flx-ido flow-minor-mode fill-column-indicator feature-mode fancy-battery eyebrowse evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-cleverparens evil-args evil-anzu eval-sexp-fu enh-ruby-mode emmet-mode elisp-slime-nav editorconfig dotenv-mode diminish diff-hl dactyl-mode company-web company-tern company-statistics column-enforce-mode clean-aindent-mode chruby centered-cursor-mode bundler browse-at-remote auto-yasnippet auto-highlight-symbol auto-compile apib-mode aggressive-indent add-node-modules-path ace-window ace-link ace-jump-helm-line ac-ispell))))
+    (helm-R helm neotree zen-and-art-theme yasnippet-snippets yaml-mode ws-butler winum white-sand-theme which-key web-mode web-beautify volatile-highlights vimrc-mode vi-tilde-fringe uuidgen use-package unfill underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme toc-org tao-theme tangotango-theme tango-plus-theme tango-2-theme tagedit symon sunny-day-theme sublime-themes subatomic256-theme subatomic-theme string-inflection spaceline-all-the-icons spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme smeargle slim-mode seti-theme seeing-is-believing scss-mode sass-mode rvm ruby-tools ruby-test-mode ruby-refactor ruby-hash-syntax rubocop rspec-mode robe rjsx-mode reverse-theme reveal-in-osx-finder restart-emacs rebecca-theme react-snippets rbenv rainbow-delimiters railscasts-theme purple-haze-theme pug-mode projectile-rails professional-theme prettier-js popwin planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme persp-mode password-generator paradox ox-gfm overseer osx-trash osx-dictionary orgit organic-green-theme org-projectile org-present org-pomodoro org-mime org-download org-bullets org-brain open-junk-file omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme nameless mwim mustang-theme move-text monokai-theme monochrome-theme molokai-theme moe-theme mmm-mode minitest minimal-theme material-theme markdown-toc majapahit-theme magit-svn magit-gitflow madhat2r-theme macrostep lush-theme lorem-ipsum livid-mode link-hint light-soap-theme launchctl kaolin-themes json-navigator json-mode js2-refactor js-doc jbeans-theme jazz-theme ir-black-theme inkpot-theme indent-guide impatient-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation heroku-theme hemisu-theme helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-css-scss helm-company helm-c-yasnippet helm-ag hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md gandalf-theme fuzzy font-lock+ flycheck-pos-tip flx-ido flow-minor-mode flatui-theme flatland-theme fill-column-indicator feature-mode farmhouse-theme fancy-battery eziam-theme eyebrowse expand-region exotica-theme evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-cleverparens evil-args evil-anzu eval-sexp-fu espresso-theme emmet-mode elisp-slime-nav editorconfig dumb-jump dracula-theme dotenv-mode doom-themes django-theme diminish diff-hl darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme dactyl-mode cyberpunk-theme counsel-projectile copy-as-format company-web company-tern company-statistics column-enforce-mode color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme clean-aindent-mode chruby cherry-blossom-theme centered-cursor-mode busybee-theme bundler bubbleberry-theme browse-at-remote birds-of-paradise-plus-theme badwolf-theme auto-yasnippet auto-highlight-symbol auto-compile apropospriate-theme apib-mode anti-zenburn-theme ample-zen-theme ample-theme alect-themes aggressive-indent afternoon-theme add-node-modules-path ace-link ace-jump-helm-line ac-ispell))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(fixed-pitch ((t (:family "Inconsolata" :slant normal :weight normal :height 1.0 :width normal))))
+ '(variable-pitch ((t (:family "Source Sans Pro" :height 180 :weight light)))))
 )
